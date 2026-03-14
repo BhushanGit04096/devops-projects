@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+    stages {
+        stage('importing git repo / Git clone') {
+            steps {
+                git branch: 'main', url: 'https://github.com/BhushanGit04096/devops-projects'
+            }
+        }
+        stage('CD to directory and build with app.py') {
+            steps {
+                dir('jenkins-projects/python-jenkins-docker-app ') {
+                    sh 'python3 app.py'
+                }
+            }
+        }
+        stage('CD to directory & running test') {
+            steps {
+                dir('jenkins-projects/python-jenkins-docker-app ') {
+                    sh 'python3 -m unittest discover "tests "'
+                }
+            }
+        }
+        stage('docker image tag and push') {
+            steps {
+                dir('jenkins-projects/python-jenkins-docker-app ') {
+                    withCredentials([usernamePassword(credentialsId: '56441e11-6c6b-45ff-a3fd-7983caf6228b', passwordVariable: 'password', usernameVariable: 'dockerhubUser')]) {
+                        sh '''
+                            echo "$password" | docker login -u "$dockerhubUser" --password-stdin
+                            docker build -t python-app:latest .
+                            docker tag python-app:latest $dockerhubUser/python-app:latest
+                            docker push $dockerhubUser/python-app:latest
+                        '''
+                    }
+                }
+            }
+        }
+    }
+}
