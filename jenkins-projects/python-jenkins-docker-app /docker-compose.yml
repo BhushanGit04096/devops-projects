@@ -1,0 +1,7 @@
+services:
+  python-log-analyzer:
+    build: .
+    container_name: python-log-analyzer
+    image: python-log-analyzer:latest
+    restart: unless-stopped
+    command: ["python", "app.py"]
