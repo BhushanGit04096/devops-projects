@@ -1,6 +1,6 @@
-# Jenkins CI/CD Pipeline for a Dockerized Python Application
+# Jenkins CI/CD Pipeline for a Dockerized Python Log Analyzer
 
-This project demonstrates a **complete CI/CD pipeline using Jenkins, Docker, and Docker Compose** for a simple Python application. It shows how source code can be automatically built, tested, containerized, and deployed using Jenkins.
+This project demonstrates a **complete CI/CD pipeline using Jenkins, Docker, and Docker Compose** for a Python-based log analyzer utility. It shows how source code can be automatically built, tested, containerized, and deployed using Jenkins.
 
 ---
 
@@ -14,7 +14,7 @@ The goal of this project is to demonstrate a basic **CI/CD workflow** with the f
 - Automate the pipeline using Jenkins
 - Push the Docker image to Docker Hub
 
-The application itself is a simple **Hello World Python program** with a unit test written using Python's `unittest` framework.
+The application itself is a small **log analysis utility** that scans log data and counts the number of **ERROR entries**. A unit test is included using Python's `unittest` framework to validate the functionality.
 
 ---
 
@@ -38,8 +38,8 @@ python-jenkins-docker/
 
 | File | Purpose |
 |-----|--------|
-| `app.py` | Main Python application |
-| `tests/test_app.py` | Unit tests for the application |
+| `app.py` | Python log analyzer script |
+| `tests/test_app.py` | Unit tests for the log analyzer |
 | `requirements.txt` | Python dependencies |
 | `Dockerfile` | Defines the Docker image |
 | `docker-compose.yml` | Runs the containerized application |
@@ -58,7 +58,7 @@ python app.py
 Expected output:
 
 ```
-Hello from Python Application for Jenkins CI/CD!
+Total ERROR entries found: 2
 ```
 
 ---
@@ -78,13 +78,13 @@ python -m unittest discover tests
 Build Docker image:
 
 ```bash
-docker build -t python-jenkins-docker .
+docker build -t python-jenkins-log-analyzer .
 ```
 
 Run container:
 
 ```bash
-docker run python-jenkins-docker
+docker run python-jenkins-log-analyzer
 ```
 
 ---
@@ -138,4 +138,5 @@ Through this project, I practiced:
 - Docker containerization
 - CI/CD pipeline implementation
 - Automated testing with Python
-- Docker image build and push workflows
+- Building and pushing Docker images through Jenkins
+- Basic log analysis automation using Python
