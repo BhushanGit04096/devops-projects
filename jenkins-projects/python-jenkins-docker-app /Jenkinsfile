@@ -36,7 +36,7 @@ pipeline {
         } 
         stage('Docker tag and push') {
             steps {
-                dir('4-python-jenkins-docker-app') {
+                dir('jenkins-projects/python-jenkins-docker-app') {
                   withCredentials([usernamePassword(credentialsId: 'bhushan0496', passwordVariable: 'password', usernameVariable: 'dockeruser')]) {
                  sh '''
                             echo "$password" | docker login -u "$dockeruser" --password-stdin
