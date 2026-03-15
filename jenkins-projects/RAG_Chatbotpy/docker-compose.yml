@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  pdf-chatbot:
+    # Build image from Dockerfile in current directory
+    build: .
+
+    # Container name
+    container_name: pdf-chatbot
+
+    # Map host port to container port
+    ports:
+      - "8501:8501"
+
+    # Restart container if it crashes
+    restart: unless-stopped
+
+    # Environment variables
+    environment:
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+
+    # Mount local directory for live code changes
+    volumes:
+      - .:/app
