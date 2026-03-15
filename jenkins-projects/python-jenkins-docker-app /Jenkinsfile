@@ -29,7 +29,7 @@ pipeline {
         }
         stage('Docker Run') {
             steps {
-                dir('4-python-jenkins-docker-app') {
+                dir('jenkins-projects/python-jenkins-docker-app ') {
                     sh 'docker run --rm python-app:latest'
                 }
             }
