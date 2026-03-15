@@ -1,1 +1,57 @@
-
+pipeline {
+    agent any
+    stages {
+        stage('Cloning GIT repo') {
+            steps {
+                git branch: 'main', url: 'https://github.com/BhushanGit04096/devops-projects'
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                dir('jenkins-projects/RAG_Chatbotpy') {
+                    sh '''
+                    sudo apt install python3-pip -y
+                    pip3 install -r requirements.txt --break-system-packages
+                    '''
+                }
+            }
+        }
+        stage('CD to directory and build') {
+            steps {
+                dir('jenkins-projects/RAG_Chatbotpy') {
+                    sh 'python3 app.py'
+                }
+            }
+        }
+         stage('CD to directory and docker build') {
+            steps {
+               dir('jenkins-projects/RAG_Chatbotpy') {
+              sh '''
+                sudo chmod 666 /var/run/docker.sock  ← HERE!
+                docker build -t pdf-chatbot:latest .
+            '''
+               }
+            }
+        }
+      stage('Docker Run') {
+            steps {
+                dir('jenkins-projects/RAG_Chatbotpy') {
+                    sh 'docker run --rm pdf-chatbot:latest'
+                }
+            }
+        } 
+      stage('Docker tag and push') {
+            steps {
+                dir('jenkins-projects/RAG_Chatbotpy') {
+                  withCredentials([usernamePassword(credentialsId: 'bhushan0496', passwordVariable: 'password', usernameVariable: 'dockeruser')]) {
+                 sh '''
+                            echo "$password" | docker login -u "$dockeruser" --password-stdin
+                            docker tag python-app:latest bhushan0496/python-app:latest
+                            docker push bhushan0496/pdf-chatbot:latest
+                        '''
+                  }
+                }
+            }
+        } 
+    }
+}
