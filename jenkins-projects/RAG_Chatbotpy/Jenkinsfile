@@ -27,7 +27,7 @@ pipeline {
             steps {
                dir('jenkins-projects/RAG_Chatbotpy') {
               sh '''
-                sudo chmod 666 /var/run/docker.sock  ← HERE!
+                sudo chmod 666 /var/run/docker.sock
                 docker build -t pdf-chatbot:latest .
             '''
                }
@@ -53,5 +53,18 @@ pipeline {
                 }
             }
         } 
+    }
+        post {
+        success {
+            echo '✅ Pipeline completed successfully!'
+            echo '🐳 Image pushed to DockerHub!'
+        }
+        failure {
+            echo '❌ Pipeline failed! Check logs above.'
+        }
+        always {
+            echo '🔄 Cleaning up!'
+            sh 'docker system prune -f'
+        }
     }
 }
