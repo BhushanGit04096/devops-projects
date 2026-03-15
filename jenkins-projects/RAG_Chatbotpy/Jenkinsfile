@@ -46,7 +46,7 @@ pipeline {
                   withCredentials([usernamePassword(credentialsId: 'bhushan0496', passwordVariable: 'password', usernameVariable: 'dockeruser')]) {
                  sh '''
                             echo "$password" | docker login -u "$dockeruser" --password-stdin
-                            docker tag python-app:latest bhushan0496/python-app:latest
+                            docker tag pdf-chatbot:latest bhushan0496/pdf-chatbot:latest
                             docker push bhushan0496/pdf-chatbot:latest
                         '''
                   }
