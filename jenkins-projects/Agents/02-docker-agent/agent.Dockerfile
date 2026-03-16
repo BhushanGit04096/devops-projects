@@ -9,6 +9,10 @@ RUN apt-get update && apt-get install -y \
     sudo \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade pip
+RUN pip install --upgrade pip && \
+    mkdir -p /.local && \
+    mkdir -p /.cache/pip && \
+    chmod -R 777 /.local && \
+    chmod -R 777 /.cache/pip
 
 WORKDIR /workspace
