@@ -1,0 +1,75 @@
+pipeline {
+    agent {
+        docker {
+            image 'bhushan0496/jenkins-docker-agent:latest'
+            args '-v /var/run/docker.sock:/var/run/docker.sock -u root'
+        }
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/BhushanGit04096/devops-projects'
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                dir('jenkins-projects/Agents/02-docker-agent') {
+                    sh 'pip install -r requirements.txt'
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                dir('jenkins-projects/Agents/02-docker-agent') {
+                    sh 'python3 app/monitor.py'
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                dir('jenkins-projects/Agents/02-docker-agent') {
+                    sh 'python3 -m unittest discover tests -v'
+                }
+            }
+        }
+        stage('Docker Build') {
+            steps {
+                dir('jenkins-projects/Agents/02-docker-agent') {
+                    sh 'docker build -t docker-agent-url-health-monitor:latest .'
+                }
+            }
+        }
+        stage('Docker Run') {
+            steps {
+                dir('jenkins-projects/Agents/02-docker-agent') {
+                    sh 'docker run --rm docker-agent-url-health-monitor:latest'
+                }
+            }
+        }
+        stage('Docker Push') {
+            steps {
+                dir('jenkins-projects/Agents/02-docker-agent') {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'password', usernameVariable: 'dockeruser')]) {
+                        sh '''
+                            echo "$password" | docker login -u "$dockeruser" --password-stdin
+                            docker tag docker-agent-url-health-monitor:latest bhushan0496/docker-agent-url-health-monitor:${BUILD_NUMBER}
+                            docker push bhushan0496/docker-agent-url-health-monitor:${BUILD_NUMBER}
+                        '''
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            sh 'docker system prune -af'
+        }
+        success {
+            echo "✅ Pipeline completed! Image pushed to DockerHub!"
+        }
+        failure {
+            echo "❌ Pipeline failed! Check logs above."
+        }
+    }
+}
