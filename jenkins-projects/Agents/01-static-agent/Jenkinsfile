@@ -1,0 +1,75 @@
+pipeline {
+    agent {label 'static-agent'}
+
+    stages {
+        stage('cloning the repo') {
+            steps {
+                git branch: 'main', url: 'https://github.com/BhushanGit04096/devops-projects'
+            }
+        }
+          stage('get into directory and install dependencies') {
+            steps {
+               dir('jenkins-projects/Agents/01-static-agent') {
+               sh '''
+               sudo apt install python3-pip -y
+               pip3 install -r requirements.txt --break-system-packages
+               '''
+                }
+            }
+        }
+        stage('get into directory and build') {
+            steps {
+               dir('jenkins-projects/Agents/01-static-agent') {
+               sh 'python3 app/monitor.py'
+               }
+            }
+        }
+        stage('get into directory and Test') {
+            steps {
+                dir('jenkins-projects/Agents/01-static-agent') {
+                    sh 'python3 -m unittest discover tests'
+                }
+            }
+        }
+        stage('CD to directory and docker build') {
+            steps {
+               dir('jenkins-projects/Agents/01-static-agent') {
+              sh 'docker build -t static-agent-url-health-monitor:latest .'
+               }
+            }
+        }
+           stage('CD to directory and Docker Run') {
+            steps {
+                dir('jenkins-projects/Agents/01-static-agent') {
+                    sh 'docker run --rm static-agent-url-health-monitor:latest'
+                }
+            }
+        }
+        stage('Docker tag and push') {
+            steps {
+                dir('jenkins-projects/Agents/01-static-agent') {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'password', usernameVariable: 'dockeruser')]) {
+                sh '''
+                            echo "$password" | docker login -u "$dockeruser" --password-stdin
+                            docker tag static-agent-url-health-monitor:latest bhushan0496/static-agent-url-health-monitor:${BUILD_NUMBER}
+                            docker push bhushan0496/static-agent-url-health-monitor:${BUILD_NUMBER}
+                        '''
+
+                  }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            sh 'docker system prune -af'
+        }
+        success {
+            echo "Pipeline completed successfully!"
+        }
+        failure {
+            echo "Pipeline failed! Check logs."
+        }
+    }
+
+}
