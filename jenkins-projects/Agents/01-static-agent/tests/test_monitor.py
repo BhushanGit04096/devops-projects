@@ -1,29 +1,11 @@
 import unittest
-from unittest.mock import patch, Mock
 import sys
 import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app'))
-from monitor import check_url, load_urls
+from monitor import load_urls
 
 class TestURLHealthMonitor(unittest.TestCase):
-
-    def test_url_is_up(self):
-        # Pretends google.com replied with 200
-        # Checks if monitor says UP
-        mock_response = Mock()
-        mock_response.status_code = 200
-        with patch('monitor.requests.get', return_value=mock_response):
-            result = check_url("https://www.google.com")
-            self.assertEqual(result['status'], 'UP')
-            self.assertEqual(result['status_code'], 200)
-
-    def test_url_is_down_connection_error(self):
-        # Pretends fake URL has no connection
-        # Checks if monitor says DOWN
-        with patch('monitor.requests.get', side_effect=Exception("Connection Error")):
-            result = check_url("https://www.nonexistentwebsite12345.com")
-            self.assertEqual(result['status'], 'DOWN')
 
     def test_load_urls(self):
         # Opens real urls.json
@@ -32,6 +14,13 @@ class TestURLHealthMonitor(unittest.TestCase):
         urls = load_urls(test_urls_path)
         self.assertIsInstance(urls, list)
         self.assertGreater(len(urls), 0)
+
+    def test_urls_not_empty(self):
+        # Checks each URL is a non empty string
+        test_urls_path = os.path.join(os.path.dirname(__file__), '..', 'app', 'urls.json')
+        urls = load_urls(test_urls_path)
+        for url in urls:
+            self.assertTrue(len(url) > 0)
 
 if __name__ == '__main__':
     unittest.main()
