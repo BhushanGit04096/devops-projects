@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import requests
 import json
 import time
@@ -118,4 +117,4 @@ def run_monitor():
 
 if __name__ == "__main__":
     run_monitor()
->>>>>>> f66d16f7a977470c443896c6d99df2e14c9774db
+
