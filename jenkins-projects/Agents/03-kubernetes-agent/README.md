@@ -11,9 +11,9 @@ along with their response time and status code.
 
 The goal of this project is to demonstrate a **Kubernetes Agent workflow** with the following steps:
 
-- Set up an AKS (Azure Kubernetes Service) cluster
+- Set up a GKE (Google Kubernetes Engine) cluster on GCP
 - Install Jenkins Kubernetes plugin
-- Configure Jenkins to connect to AKS cluster
+- Configure Jenkins to connect to GKE cluster
 - Pod spins up automatically when pipeline starts
 - All build workloads run inside the Pod, never on Jenkins Master
 - Build and test a Python URL Health Monitor application inside the Pod
@@ -34,13 +34,13 @@ to validate the core monitoring logic.
 GitHub Push
      ↓
 Jenkins Master (Azure VM)
-     ↓ creates Pod in AKS cluster
+     ↓ creates Pod in GKE cluster
 Kubernetes Pod ← created per pipeline run
      ↓
 Checkout → Test → Docker Build → Push to DockerHub
      ↓
 Pod destroyed after job ✅
-Cluster auto-scales if needed ✅
+GKE auto-scales if needed ✅
 ```
 
 ---
@@ -124,25 +124,38 @@ docker run url-health-monitor
 
 ---
 
-## Kubernetes Agent Setup Steps
+## GKE Cluster Setup Steps
 
-### Step 1 — Create AKS Cluster
+### Step 1 — Set GCP Project
 ```bash
-az group create --name devops-projects --location eastus
-az aks create --resource-group devops-projects \
-              --name jenkins-k8s-cluster \
-              --node-count 1 \
-              --node-vm-size Standard_B2s \
-              --generate-ssh-keys
+gcloud config set project <YOUR_PROJECT_ID>
 ```
 
-### Step 2 — Get AKS Credentials
+### Step 2 — Enable GKE API
 ```bash
-az aks get-credentials --resource-group devops-projects \
-                       --name jenkins-k8s-cluster
+gcloud services enable container.googleapis.com
 ```
 
-### Step 3 — Install Jenkins Kubernetes Plugin
+### Step 3 — Create GKE Cluster
+```bash
+gcloud container clusters create jenkins-k8s-cluster \
+    --zone us-central1-a \
+    --num-nodes 1 \
+    --machine-type e2-medium
+```
+
+### Step 4 — Get Cluster Credentials
+```bash
+gcloud container clusters get-credentials jenkins-k8s-cluster \
+    --zone us-central1-a
+```
+
+### Step 5 — Verify Cluster Running
+```bash
+kubectl get nodes
+```
+
+### Step 6 — Install Jenkins Kubernetes Plugin
 ```
 Manage Jenkins → Plugins → Available
 Search: Kubernetes
@@ -150,21 +163,21 @@ Install: Kubernetes plugin
 Restart Jenkins
 ```
 
-### Step 4 — Configure Kubernetes Cloud in Jenkins
+### Step 7 — Configure Kubernetes Cloud in Jenkins
 ```
 Manage Jenkins → Clouds → New Cloud
 Type          : Kubernetes
 Name          : kubernetes
-K8s URL       : (AKS cluster URL)
-Credentials   : (kubeconfig file)
+K8s URL       : (GKE cluster URL)
+Credentials   : (kubeconfig/service account)
 Jenkins URL   : http://<MASTER_IP>:8080
 ```
 
-### Step 5 — Run Pipeline
+### Step 8 — Run Pipeline
 ```
 Jenkins reads Jenkinsfile
 Sees: agent { kubernetes { } }
-Creates Pod in AKS
+Creates Pod in GKE cluster
 Pipeline runs inside Pod
 Pod destroyed after job ✅
 ```
@@ -203,8 +216,7 @@ Pipeline defined in `Jenkinsfile`.
 
 - Docker
 - Jenkins with Kubernetes plugin
-- Azure Account
-- AKS Cluster
+- GCP Account with GKE enabled
 - kubectl installed
 - DockerHub Account
 
@@ -215,10 +227,10 @@ Pipeline defined in `Jenkinsfile`.
 Through this project, I practiced:
 
 - Jenkins Kubernetes Agent architecture
-- AKS cluster creation and configuration
-- Connecting Jenkins to Kubernetes cluster
+- GKE cluster creation and configuration on GCP
+- Connecting Jenkins to Google Kubernetes Engine
 - Ephemeral Pod agents — spin up, build, destroy
-- Auto-scaling build infrastructure
+- Auto-scaling build infrastructure on GCP
 - CI/CD pipeline automation with Jenkins
 - Pushing Docker images to DockerHub through Jenkins
 - Understanding Kubernetes Agent advantages over Docker/Static Agents
