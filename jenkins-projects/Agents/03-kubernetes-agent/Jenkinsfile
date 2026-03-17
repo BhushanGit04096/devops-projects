@@ -1,0 +1,102 @@
+pipeline {
+    agent {
+    kubernetes {
+        yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: python
+    image: python:3.9-slim
+    command:
+    - sleep
+    args:
+    - infinity
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+  - name: docker
+    image: docker:24-dind
+    securityContext:
+      privileged: true
+    env:
+    - name: DOCKER_TLS_CERTDIR
+      value: ""
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+"""
+    }
+}
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/BhushanGit04096/devops-projects'
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                container('python') {
+                    dir('jenkins-projects/Agents/03-kubernetes-agent') {
+                        sh 'pip install -r requirements.txt'
+                    }
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                container('python') {
+                    dir('jenkins-projects/Agents/03-kubernetes-agent') {
+                        sh 'python3 app/monitor.py'
+                    }
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                container('python') {
+                    dir('jenkins-projects/Agents/03-kubernetes-agent') {
+                        sh 'python3 -m unittest discover tests -v'
+                    }
+                }
+            }
+        }
+        stage('Docker Build') {
+            steps {
+                container('docker') {
+                    dir('jenkins-projects/Agents/03-kubernetes-agent') {
+                        sh 'docker build -t k8s-agent-url-health-monitor:latest .'
+                    }
+                }
+            }
+        }
+        stage('Docker Push') {
+            steps {
+                container('docker') {
+                    dir('jenkins-projects/Agents/03-kubernetes-agent') {
+                        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'password', usernameVariable: 'dockeruser')]) {
+                            sh '''
+                                echo "$password" | docker login -u "$dockeruser" --password-stdin
+                                docker tag k8s-agent-url-health-monitor:latest bhushan0496/k8s-agent-url-health-monitor:${BUILD_NUMBER}
+                                docker push bhushan0496/k8s-agent-url-health-monitor:${BUILD_NUMBER}
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            echo "Pipeline completed! Pod will be destroyed now."
+        }
+        success {
+            echo "✅ Image pushed to DockerHub successfully!"
+        }
+        failure {
+            echo "❌ Pipeline failed! Check logs above."
+        }
+    }
+}
